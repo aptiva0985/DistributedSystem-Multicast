@@ -10,6 +10,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import distSysLab2.clock.ClockService;
 import distSysLab2.clock.ClockService.ClockType;
 import distSysLab2.message.TimeStampMessage;
+import distSysLab2.model.GroupBean;
 import distSysLab2.model.NodeBean;
 import distSysLab2.model.RuleBean;
 import distSysLab2.model.RuleBean.RuleAction;
@@ -22,6 +23,7 @@ public class MessagePasser {
     private LinkedBlockingDeque<TimeStampMessage> recvQueue = new LinkedBlockingDeque<TimeStampMessage>();
     private LinkedBlockingDeque<TimeStampMessage> recvDelayQueue = new LinkedBlockingDeque<TimeStampMessage>();
     private HashMap<String, NodeBean> nodeList = new HashMap<String, NodeBean>();
+    private HashMap<String, GroupBean> groupList = new HashMap<String, GroupBean>();
     private ArrayList<RuleBean> sendRules = new ArrayList<RuleBean>();
     private ArrayList<RuleBean> recvRules = new ArrayList<RuleBean>();
 
@@ -51,6 +53,7 @@ public class MessagePasser {
         ConfigParser.configurationFile = configFile;
         String type = ConfigParser.readClock();
         nodeList = ConfigParser.readConfig();
+        groupList = ConfigParser.readGroup();
         sendRules = ConfigParser.readSendRules();
         recvRules = ConfigParser.readRecvRules();
         MD5Last = ConfigParser.getMD5Checksum(configFile);

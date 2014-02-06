@@ -17,12 +17,24 @@ configuration:
     - name: charlie
       ip: 192.168.1.131
       port: 33333
-    - name: david
+    - name: daphnie
       ip: 192.168.1.131
       port: 44444
     - name: log
       ip: 192.168.1.131
       port: 55555
+
+groups :
+    - name : Group1
+      members :
+        - alice
+        - bob
+        - charlie
+    - name : Group2
+      members :
+        - daphnie
+        - bob
+        - charlie
 
 sendRules:
     - action: delay # Ack message number 4 from bob to alice will not be sent
@@ -47,4 +59,3 @@ receiveRules:
       seqNum: 3
     - action: delay
       src: P1 # receives will be duplicated
-    

@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 
 import org.yaml.snakeyaml.Yaml;
 
+import distSysLab2.model.GroupBean;
 import distSysLab2.model.NodeBean;
 import distSysLab2.model.RuleBean;
 import distSysLab2.model.RuleBean.RuleAction;
@@ -54,17 +55,48 @@ public class ConfigParser {
         for(Map<String, Object> node : entrys) {
             NodeBean bean = new NodeBean();
             for(Entry<String, Object> entry : node.entrySet()) {
-                if(entry.getKey().equalsIgnoreCase("Name"))
+                if(entry.getKey().equalsIgnoreCase("Name")) {
                     bean.setName(entry.getValue().toString());
-                if(entry.getKey().equalsIgnoreCase("IP"))
+                }
+                if(entry.getKey().equalsIgnoreCase("IP")) {
                     bean.setIp(entry.getValue().toString());
-                if(entry.getKey().equalsIgnoreCase("Port"))
+                }
+                if(entry.getKey().equalsIgnoreCase("Port")) {
                     bean.setPort(Integer.parseInt((entry.getValue().toString())));
+                }
             }
             nodeList.put(bean.getName(), bean);
         }
         nodeList.remove(null);
         return nodeList;
+    }
+    
+    /**
+     * Read group definition part in config file.
+     */
+    @SuppressWarnings("unchecked")
+    public static HashMap<String, GroupBean> readGroup() throws UnknownHostException {
+        HashMap<String, GroupBean> groupList = new HashMap<String, GroupBean>();
+        Map<String, ArrayList<Map<String, Object>>> obj = init();
+
+        ArrayList<Map<String, Object>> entrys = obj.get("groups");
+
+        for(Map<String, Object> node : entrys) {
+            GroupBean bean = new GroupBean();
+            for(Entry<String, Object> entry : node.entrySet()) {
+                if(entry.getKey().equalsIgnoreCase("Name")) {
+                    bean.setName(entry.getValue().toString());
+                }
+                if(entry.getKey().equalsIgnoreCase("Members")) {
+                    for(String member : (ArrayList<String>) entry.getValue()) {
+                        bean.addMember(member);
+                    }
+                }
+            }
+            groupList.put(bean.getName(), bean);
+        }
+        groupList.remove(null);
+        return groupList;
     }
 
     /**
@@ -80,12 +112,15 @@ public class ConfigParser {
             RuleBean bean = new RuleBean();
             for(Map.Entry<String, Object> item : rule.entrySet()) {
                 if(item.getKey().equalsIgnoreCase("Action")) {
-                    if(item.getValue().toString().equalsIgnoreCase("Drop"))
+                    if(item.getValue().toString().equalsIgnoreCase("Drop")) {
                         bean.setAction(RuleAction.DROP);
-                    if(item.getValue().toString().equalsIgnoreCase("Delay"))
+                    }
+                    if(item.getValue().toString().equalsIgnoreCase("Delay")) {
                         bean.setAction(RuleAction.DELAY);
-                    if(item.getValue().toString().equalsIgnoreCase("Duplicate"))
+                    }
+                    if(item.getValue().toString().equalsIgnoreCase("Duplicate")) {
                         bean.setAction(RuleAction.DUPLICATE);
+                    }
                 }
 
                 if(item.getKey().equalsIgnoreCase("Src")) {
@@ -119,12 +154,15 @@ public class ConfigParser {
             RuleBean bean = new RuleBean();
             for(Map.Entry<String, Object> item : rule.entrySet()) {
                 if(item.getKey().equalsIgnoreCase("Action")) {
-                    if(item.getValue().toString().equalsIgnoreCase("Drop"))
+                    if(item.getValue().toString().equalsIgnoreCase("Drop")) {
                         bean.setAction(RuleAction.DROP);
-                    if(item.getValue().toString().equalsIgnoreCase("Delay"))
+                    }
+                    if(item.getValue().toString().equalsIgnoreCase("Delay")) {
                         bean.setAction(RuleAction.DELAY);
-                    if(item.getValue().toString().equalsIgnoreCase("Duplicate"))
+                    }
+                    if(item.getValue().toString().equalsIgnoreCase("Duplicate")) {
                         bean.setAction(RuleAction.DUPLICATE);
+                    }
                 }
 
                 if(item.getKey().equalsIgnoreCase("Src")) {
