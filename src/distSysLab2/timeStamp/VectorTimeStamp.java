@@ -1,5 +1,8 @@
 package distSysLab2.timeStamp;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -54,6 +57,14 @@ public class VectorTimeStamp extends TimeStamp implements Comparable<VectorTimeS
 
     @Override
     public String toString() {
-        return localTS.toString();
+        ArrayList<Entry<String, AtomicInteger>> list = 
+                new ArrayList<Entry<String, AtomicInteger>>(localTS.entrySet());
+        Collections.sort(list, new Comparator<Entry<String, AtomicInteger>>() {  
+            public int compare(Entry<String, AtomicInteger> o1,
+                               Entry<String, AtomicInteger> o2) {  
+                return (o1.getKey().compareTo(o2.getKey()));  
+            }  
+        });  
+        return list.toString();
     }
 }
