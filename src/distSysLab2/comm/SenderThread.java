@@ -17,7 +17,6 @@ public class SenderThread implements Runnable {
     private Socket socket;
 
     public SenderThread(LinkedBlockingDeque<TimeStampMessage> sendQueue,
-                        LinkedBlockingDeque<TimeStampMessage> delayQueue,
                         HashMap<String, NodeBean> nodeList) {
         this.sendQueue = sendQueue;
         this.nodeList = nodeList;

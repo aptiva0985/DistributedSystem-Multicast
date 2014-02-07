@@ -78,7 +78,7 @@ public class MessagePasser {
         else {
             listener = new ListenerThread(nodeList.get(localName).getPort(), configFile,
                                             recvRules, sendRules, recvQueue, recvDelayQueue,clockServ);
-            sender = new SenderThread(sendQueue, sendDelayQueue, nodeList);
+            sender = new SenderThread(sendQueue, nodeList);
         }
 
         System.out.println("Local status is: " + this.toString());
@@ -148,9 +148,10 @@ public class MessagePasser {
     }
 
     /**
-     * Send a message.
+     * Send a message. It can be a multicast message or a unicast one.
      *
      * @param message The message need to be sent.
+     * @param willLog If this message need to be logged.
      */
     public void send(TimeStampMessage message, boolean willLog) {
         // Set source and seq of the massage
@@ -158,7 +159,30 @@ public class MessagePasser {
         message.setSeqNum(curSeqNum++);
         this.getClockServ().updateTimeStampOnSend();
         message.setTimeStamp(clockServ.getCurTimeStamp());
-
+        
+        // If the message is a multicast one
+        if(groupList.get(message.getDest()) != null) {
+            GroupBean sendGroup = groupList.get(message.getDest());
+            
+            // Send the message to every group member
+            for(String member : sendGroup.getMemberList()) {
+                // Make a copy of the message and change the destination
+                TimeStampMessage actual = message.copyOf();
+                actual.setDest(member);
+                checkRuleAndSend(actual, willLog);
+            }
+        }
+        else {
+            checkRuleAndSend(message, willLog);
+        }
+    }
+    
+    /**
+     * Check message with send rule, then try to send the message. 
+     * @param message The message need to be sent.
+     * @param willLog If this message need to be logged.
+     */
+    public void checkRuleAndSend(TimeStampMessage message, boolean willLog) {
         // Check if the configuration file has been changed.
         String MD5 = ConfigParser.getMD5Checksum(configFile);
         if (!MD5.equals(MD5Last)) {
