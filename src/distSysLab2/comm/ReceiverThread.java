@@ -97,7 +97,10 @@ public class ReceiverThread implements Runnable {
                 }
             }
         }
-        catch (IOException | ClassNotFoundException e) {
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

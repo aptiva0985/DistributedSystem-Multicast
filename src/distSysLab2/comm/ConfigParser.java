@@ -133,7 +133,7 @@ public class ConfigParser {
                     bean.setKind(item.getValue().toString());
                 }
                 if(item.getKey().equalsIgnoreCase("seqNum")) {
-                    bean.setSeqNum((int) item.getValue());
+                    bean.setSeqNum(Integer.valueOf(item.getValue().toString()));
                 }
             }
             sendRules.add(bean);
@@ -175,7 +175,7 @@ public class ConfigParser {
                     bean.setKind(item.getValue().toString());
                 }
                 if(item.getKey().equalsIgnoreCase("seqNum")) {
-                    bean.setSeqNum((int) item.getValue());
+                    bean.setSeqNum(Integer.valueOf(item.getValue().toString()));
                 }
                 if(item.getKey().equalsIgnoreCase("Duplicate")) {
                     if((item.getValue()).toString().equalsIgnoreCase("True")) {
@@ -232,8 +232,12 @@ public class ConfigParser {
 
             fis.close();
         }
-        catch (IOException | NoSuchAlgorithmException e) {
+        catch (IOException e) {
             // Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (NoSuchAlgorithmException e){
+        	// Auto-generated catch block
             e.printStackTrace();
         }
         return complete.digest();

@@ -5,10 +5,12 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import distSysLab2.clock.ClockService;
 import distSysLab2.clock.ClockService.ClockType;
+import distSysLab2.message.MulticastMessage;
 import distSysLab2.message.TimeStampMessage;
 import distSysLab2.model.GroupBean;
 import distSysLab2.model.NodeBean;
@@ -27,6 +29,10 @@ public class MessagePasser {
     private HashMap<String, GroupBean> groupList = new HashMap<String, GroupBean>();
     private ArrayList<RuleBean> sendRules = new ArrayList<RuleBean>();
     private ArrayList<RuleBean> recvRules = new ArrayList<RuleBean>();
+    
+    private LinkedBlockingDeque<TimeStampMessage> holdBackQueue = new LinkedBlockingDeque<TimeStampMessage>();
+    private HashMap<String, LinkedList<MulticastMessage>> sendMsgQueue =  new HashMap<String, LinkedList<MulticastMessage>>();
+    private HashMap<String, LinkedList<MulticastMessage>> acks = new HashMap<String, LinkedList<MulticastMessage>>();
 
     private String configFile;
     private String localName;
