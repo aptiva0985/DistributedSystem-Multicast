@@ -30,7 +30,7 @@ public class MessagePasser {
     private ArrayList<RuleBean> sendRules = new ArrayList<RuleBean>();
     private ArrayList<RuleBean> recvRules = new ArrayList<RuleBean>();
     
-    private LinkedBlockingDeque<TimeStampMessage> holdBackQueue = new LinkedBlockingDeque<TimeStampMessage>();
+    private HashMap<String, TimeStampMessage> holdBackQueue = new HashMap<String, TimeStampMessage>();
     private HashMap<String, LinkedList<MulticastMessage>> sendMsgQueue =  new HashMap<String, LinkedList<MulticastMessage>>();
     private HashMap<String, LinkedList<MulticastMessage>> acks = new HashMap<String, LinkedList<MulticastMessage>>();
 
@@ -84,7 +84,7 @@ public class MessagePasser {
         }
         else {
             listener = new ListenerThread(nodeList.get(localName).getPort(), configFile,
-                                            recvRules, sendRules, recvQueue, recvDelayQueue,clockServ);
+                                            recvRules, sendRules, recvQueue, recvDelayQueue,clockServ, holdBackQueue, acks, groupList);
             sender = new SenderThread(sendQueue, nodeList);
         }
 

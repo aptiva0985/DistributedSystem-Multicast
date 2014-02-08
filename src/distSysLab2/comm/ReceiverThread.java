@@ -5,9 +5,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import distSysLab2.message.MulticastMessage;
 import distSysLab2.message.TimeStampMessage;
+import distSysLab2.model.GroupBean;
 import distSysLab2.model.RuleBean;
 import distSysLab2.model.RuleBean.RuleAction;
 import distSysLab2.clock.ClockService;
@@ -22,11 +26,17 @@ public class ReceiverThread implements Runnable {
     private LinkedBlockingDeque<TimeStampMessage> recvDelayQueue;
     private String configFile;
     private String MD5Last;
+    private HashMap<String, TimeStampMessage> holdBackQueue;
+    private HashMap<String, LinkedList<MulticastMessage>> acks;
+    private HashMap<String, GroupBean> groupList;
 
     public ReceiverThread(Socket socket, String configFile, ClockService clock,
                             ArrayList<RuleBean> recvRules, ArrayList<RuleBean> sendRules,
                             LinkedBlockingDeque<TimeStampMessage> recvQueue,
-                            LinkedBlockingDeque<TimeStampMessage> recvDelayQueue) {
+                            LinkedBlockingDeque<TimeStampMessage> recvDelayQueue,
+                            HashMap<String, TimeStampMessage> holdBackQueue,
+                            HashMap<String, LinkedList<MulticastMessage>> acks,
+                            HashMap<String, GroupBean> groupList) {
         this.socket = socket;
         this.recvQueue = recvQueue;
         this.in = null;
@@ -36,6 +46,9 @@ public class ReceiverThread implements Runnable {
         this.sendRules = sendRules;
         this.configFile = configFile;
         MD5Last = "";
+        this.holdBackQueue = holdBackQueue;
+        this.acks = acks;
+        this.groupList = groupList;
     }
 
     @Override
@@ -54,6 +67,67 @@ public class ReceiverThread implements Runnable {
                 if((message = (TimeStampMessage) (in.readObject())) != null) {
                     // Try to match a rule and act corresponding
                     // The match procedure should be in the listener thread
+                	
+                	if(message instanceof MulticastMessage) {
+                		String keyOfAcks = null;
+                		if(!message.getKind().equals("Ack")) {
+                			keyOfAcks = ((MulticastMessage) message).getSrcGroup() + message.getSrc() + ((MulticastMessage) message).getNum();
+                			if(!holdBackQueue.containsKey(keyOfAcks)) {
+                				holdBackQueue.put(keyOfAcks, message);
+                			}
+                			if(holdBackQueue.get(keyOfAcks) == null) 
+                				continue;
+                		    String groupName = ((MulticastMessage) message).getSrcGroup();
+                		    String localName = message.getDest();
+                		    ArrayList<String> memberList = groupList.get(groupName).getMemberList();
+                		    for(int i = 0; i < memberList.size(); i ++) {
+                		    	if(!memberList.get(i).equals(localName)) {
+                		    		MulticastMessage ackMsg = new MulticastMessage(memberList.get(i), "Ack", keyOfAcks);
+                		    		ackMsg.setSrc(localName);
+                		    		ackMsg.setTimeStamp(message.getTimeStamp());
+                		    		ackMsg.setSeqNum(message.getSeqNum());
+                		    		ackMsg.setSrcGroup(((MulticastMessage) message).getSrcGroup());
+                		    		ackMsg.setNum(((MulticastMessage) message).getNum());
+                		    		MessagePasser.getInstance().send(ackMsg, false);
+                		    	}
+                		    }
+                			
+                		}
+                		else {
+                			keyOfAcks = (String) message.getData();
+                			if(acks.containsKey(keyOfAcks)) {
+                				int i = 0;
+                				for(; i < acks.get(keyOfAcks).size(); i ++) {
+                					if(acks.get(keyOfAcks).get(i).getSrc().equals(message.getSrc())) {
+                						break;
+                					}
+                				}
+                				if(i == acks.get(keyOfAcks).size())
+                					acks.get(keyOfAcks).add((MulticastMessage) message);
+                			}
+                			else {
+                				LinkedList<MulticastMessage> temp = new LinkedList<MulticastMessage>();
+                				temp.add((MulticastMessage) message);
+                				acks.put(keyOfAcks, temp);
+                			}
+                		}
+                		if(groupList.get(((MulticastMessage) message).getSrcGroup()).getMemberList().size() == (acks.get(keyOfAcks).size() + 2)) {
+            				MulticastMessage multimessage = null;
+            				if((holdBackQueue.containsKey(keyOfAcks))) {
+            					multimessage = (MulticastMessage) holdBackQueue.get(keyOfAcks);
+            				}
+            				else
+            					continue;
+            				
+            				message = multimessage;
+            				acks.remove(keyOfAcks);
+            				holdBackQueue.put(keyOfAcks, null);
+            			}
+            			else {
+            				continue;
+            			}
+                	}
+          
                     RuleAction action = RuleAction.NONE;
                     for (RuleBean rule : recvRules) {
                         if (rule.isMatch(message)) {
