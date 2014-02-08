@@ -22,6 +22,7 @@ public class MessagePasser {
     private LinkedBlockingDeque<TimeStampMessage> sendDelayQueue = new LinkedBlockingDeque<TimeStampMessage>();
     private LinkedBlockingDeque<TimeStampMessage> recvQueue = new LinkedBlockingDeque<TimeStampMessage>();
     private LinkedBlockingDeque<TimeStampMessage> recvDelayQueue = new LinkedBlockingDeque<TimeStampMessage>();
+    
     private HashMap<String, NodeBean> nodeList = new HashMap<String, NodeBean>();
     private HashMap<String, GroupBean> groupList = new HashMap<String, GroupBean>();
     private ArrayList<RuleBean> sendRules = new ArrayList<RuleBean>();

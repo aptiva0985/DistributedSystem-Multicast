@@ -49,7 +49,7 @@ public class TimeStampMessage extends Message implements Comparable<TimeStampMes
     public String toString() {
         return "From:" + this.getSrc() + " to:" + this.getDest() +
                " Seq:" + this.getSeqNum() + " Kind:" + this.getKind()
-               + " Dup:" + this.getDuplicate() + " TimeStamp: " + this.getTimeStamp().toString()
+               + " Dup:" + this.getDuplicate() + " TimeStamp: " + this.getTimeStamp()
                + " [Data:" + this.getData() + " ]";
     }
 }
