@@ -11,6 +11,14 @@ public class MulticastMessage extends TimeStampMessage {
     public MulticastMessage(String dest, String kind, Object data) {
         super(dest, kind, data);
     }
+    
+    public MulticastMessage(TimeStampMessage msg) {
+        MulticastMessage newMsg = new MulticastMessage(msg.getDest(), msg.getKind(), msg.getData());
+        newMsg.setDuplicate(msg.getDuplicate());
+        newMsg.setSeqNum(msg.getSeqNum());
+        newMsg.setSrc(msg.getSrc());
+        newMsg.setTimeStamp(msg.getTimeStamp());
+    }
 
 
 	public String getSrcGroup() {

@@ -11,6 +11,10 @@ public class Message implements Serializable {
     protected String kind;
     protected Object data;
     protected boolean duplicate;
+    
+    public Message() {
+        
+    }
 
     /**
      * Constructor of message

@@ -30,9 +30,10 @@ public class MessagePasser {
     private ArrayList<RuleBean> sendRules = new ArrayList<RuleBean>();
     private ArrayList<RuleBean> recvRules = new ArrayList<RuleBean>();
     
-    private LinkedBlockingDeque<TimeStampMessage> holdBackQueue = new LinkedBlockingDeque<TimeStampMessage>();
+    private HashMap<String, TimeStampMessage> holdBackQueue = new HashMap<String, TimeStampMessage>();
     private HashMap<String, LinkedList<MulticastMessage>> sendMsgQueue =  new HashMap<String, LinkedList<MulticastMessage>>();
     private HashMap<String, LinkedList<MulticastMessage>> acks = new HashMap<String, LinkedList<MulticastMessage>>();
+    private HashMap<String, Integer> sendCounter = new HashMap<String, Integer>();
 
     private String configFile;
     private String localName;
@@ -174,10 +175,21 @@ public class MessagePasser {
             // Send the message to every group member
             for(String member : sendGroup.getMemberList()) {
                 // Make a copy of the message and change the destination
-                TimeStampMessage actual = message.copyOf();
+                MulticastMessage actual = new MulticastMessage(message);
                 actual.setDest(member);
+                actual.setSrcGroup(sendGroup.getName());
+                actual.setNum(sendCounter.get(sendGroup.getName()));
+                
+                // Update the counter for current receive group
+                sendCounter.put(sendGroup.getName(), sendCounter.get(sendGroup.getName() + 1));
+                
                 checkRuleAndSend(actual, willLog);
             }
+            
+            // Setup timer for timeout
+            AckChecker checker = new AckChecker(acks, (MulticastMessage) message, sendGroup.getMemberList());
+            Thread thread = new Thread(checker);
+            thread.start();
         }
         else {
             checkRuleAndSend(message, willLog);
