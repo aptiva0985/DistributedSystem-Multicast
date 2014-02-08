@@ -21,7 +21,8 @@ public class UserInputThread implements Runnable {
                 if(command.equals("send")) {
                     System.out.println("Message dest:");
                     String dest = in.readLine();
-                    while(!msgPasser.getNodeList().containsKey(dest)) {
+                    while(!msgPasser.getNodeList().containsKey(dest) &&
+                          !msgPasser.getGroupList().containsKey(dest)) {
                         System.out.println("Dest not existed, try again:");
                         dest = in.readLine();
                     }

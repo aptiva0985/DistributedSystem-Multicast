@@ -287,6 +287,10 @@ public class MessagePasser {
     public HashMap<String, NodeBean> getNodeList() {
         return nodeList;
     }
+    
+    public HashMap<String, GroupBean> getGroupList() {
+        return groupList;
+    }
 
     public ClockService getClockServ() {
         return clockServ;
