@@ -85,7 +85,7 @@ public class MessagePasser {
         }
         else {
             listener = new ListenerThread(nodeList.get(localName).getPort(), configFile,
-                                            recvRules, sendRules, recvQueue, recvDelayQueue,clockServ);
+                                            recvRules, sendRules, recvQueue, recvDelayQueue,clockServ, holdBackQueue, acks, groupList);
             sender = new SenderThread(sendQueue, nodeList);
         }
 
