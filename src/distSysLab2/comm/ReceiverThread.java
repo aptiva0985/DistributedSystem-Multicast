@@ -6,7 +6,7 @@ import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import distSysLab2.message.MulticastMessage;
@@ -27,7 +27,7 @@ public class ReceiverThread implements Runnable {
     private String configFile;
     private String MD5Last;
     private HashMap<String, TimeStampMessage> holdBackQueue;
-    private volatile HashMap<String, LinkedList<MulticastMessage>> acks;
+    private volatile HashMap<String, HashSet<String>> acks;
     private HashMap<String, GroupBean> groupList;
 
     public ReceiverThread(Socket socket, String configFile, ClockService clock,
@@ -35,7 +35,7 @@ public class ReceiverThread implements Runnable {
                             LinkedBlockingDeque<TimeStampMessage> recvQueue,
                             LinkedBlockingDeque<TimeStampMessage> recvDelayQueue,
                             HashMap<String, TimeStampMessage> holdBackQueue,
-                            HashMap<String, LinkedList<MulticastMessage>> acks,
+                            HashMap<String, HashSet<String>> acks,
                             HashMap<String, GroupBean> groupList) {
         this.socket = socket;
         this.recvQueue = recvQueue;
@@ -69,69 +69,68 @@ public class ReceiverThread implements Runnable {
                     // The match procedure should be in the listener thread
                 	
                 	if(message instanceof MulticastMessage) {
-                		String keyOfAcks = null;
-                		if(!message.getKind().equals("Ack")) {
-                		    MulticastMessage multiMsg = (MulticastMessage) message;
-                		    System.out.println("Get a multicast message, from " + multiMsg.getSrc() + " destGroup: " + multiMsg.getSrcGroup());
-                			keyOfAcks = ((MulticastMessage) message).getSrcGroup() + message.getSrc() + ((MulticastMessage) message).getNum();
-                			if(!holdBackQueue.containsKey(keyOfAcks)) {
-                				holdBackQueue.put(keyOfAcks, message);
-                			}
-                			if(holdBackQueue.get(keyOfAcks) == null) 
-                				continue;
-                		    String groupName = ((MulticastMessage) message).getSrcGroup();
-                		    String localName = message.getDest();
-                		    ArrayList<String> memberList = groupList.get(groupName).getMemberList();
-                		    for(int i = 0; i < memberList.size(); i++) {
-                		    	if(!memberList.get(i).equals(localName)) {
-                		    		MulticastMessage ackMsg = new MulticastMessage(memberList.get(i), "Ack", keyOfAcks);
-                		    		ackMsg.setSrc(localName);
-                		    		ackMsg.setTimeStamp(message.getTimeStamp());
-                		    		ackMsg.setSeqNum(message.getSeqNum());
-                		    		ackMsg.setSrcGroup(((MulticastMessage) message).getSrcGroup());
-                		    		ackMsg.setNum(((MulticastMessage) message).getNum());
-                		    		System.out.println("Send Ack message from " + ackMsg.getSrc() + ", to: " + ackMsg.getDest());
-                		    		MessagePasser.getInstance().send(ackMsg);
-                		    	}
-                		    }	
-                		}
-                		else {
-                		    MulticastMessage multiMsg = (MulticastMessage) message;
-                            System.out.println("Get Ack message, from " + multiMsg.getSrc() + " to: " + multiMsg.getDest());
-                		    
-                			keyOfAcks = (String) message.getData();
-                			if(acks.containsKey(keyOfAcks)) {
-                				int i = 0;
-                				for(; i < acks.get(keyOfAcks).size(); i++) {
-                					if(acks.get(keyOfAcks).get(i).getSrc().equals(message.getSrc())) {
-                						break;
-                					}
-                				}
-                				if(i == acks.get(keyOfAcks).size())
-                					acks.get(keyOfAcks).add((MulticastMessage) message);
-                			}
-                			else {
-                				LinkedList<MulticastMessage> temp = new LinkedList<MulticastMessage>();
-                				temp.add((MulticastMessage) message);
-                				acks.put(keyOfAcks, temp);
-                			}
-                		}
-                		
-                		if((acks.get(keyOfAcks) != null) && (groupList.get(((MulticastMessage) message).getSrcGroup()).getMemberList().size() == (acks.get(keyOfAcks).size() + 1))) {
-            				MulticastMessage multimessage = null;
-            				System.out.println("deliver");
-            				if((holdBackQueue.containsKey(keyOfAcks))) {
-            					multimessage = (MulticastMessage) holdBackQueue.get(keyOfAcks);
-            				}
-            				else
-            					continue;
-            				message = multimessage;
-            				//acks.remove(keyOfAcks);
-            				holdBackQueue.put(keyOfAcks, null);
-            			}
-            			else {
-            				continue;
-            			}
+                	    MulticastMessage multiMsg = (MulticastMessage) message;
+                	    String destGroup = multiMsg.getSrcGroup();
+                        String localName = multiMsg.getDest();
+                        ArrayList<String> memberList = groupList.get(destGroup).getMemberList();
+                	    String keyOfAcks = destGroup + multiMsg.getSrc() + multiMsg.getNum();
+                	    
+                	    // If we receive a real multicast message
+                	    if(!message.getKind().equals("Ack")) {
+                	        System.out.println("Get a multicast message, from " +
+                	                           multiMsg.getSrc() + " destGroup: " + destGroup + multiMsg);
+                	        
+                	        // If it is a new message, add it to holdBackQueue
+                	        if(!holdBackQueue.containsKey(keyOfAcks)) {
+                                holdBackQueue.put(keyOfAcks, multiMsg);
+                            }
+                	        
+                	        // Send Ack message to every group member, exclude itself
+                	        for(String member : memberList) {
+                	            if(!member.equals(localName)) {
+                	                MulticastMessage ackMsg = new MulticastMessage(member, "Ack", keyOfAcks);
+                                    ackMsg.setSrc(localName);
+                                    ackMsg.setTimeStamp(message.getTimeStamp());
+                                    ackMsg.setSeqNum(message.getSeqNum());
+                                    ackMsg.setSrcGroup(((MulticastMessage) message).getSrcGroup());
+                                    ackMsg.setNum(((MulticastMessage) message).getNum());
+                                    System.out.println("Send Ack message from " + ackMsg.getSrc() + ", to: " + ackMsg.getDest());
+                                    MessagePasser.getInstance().checkRuleAndSend(ackMsg);
+                	            }
+                	        }
+                	    }
+                	    else {
+                	        System.out.println("Get Ack message, from " + multiMsg.getSrc() + " to: " + multiMsg.getDest() + multiMsg);
+                	        
+                	        keyOfAcks = (String) message.getData();
+                	        if(acks.containsKey(keyOfAcks)) {
+                	            acks.get(keyOfAcks).add(message.getSrc());
+                	        }
+                	        else {
+                	            HashSet<String> tmp = new HashSet<String>();
+                	            tmp.add(message.getSrc());
+                	            acks.put(keyOfAcks, tmp);
+                	        }
+                	    }
+                	    
+                	    // If we get enough ack for this message
+                	    if((acks.get(keyOfAcks) != null) &&
+                	       (acks.get(keyOfAcks).size() == memberList.size() - 1)) {
+                	        System.out.println("Got enough Ack for message: " + keyOfAcks);
+                	        
+                	        if((holdBackQueue.containsKey(keyOfAcks))) {
+                	            System.out.println("Should deliver now.");
+                                // TODO Deliver
+                	            message = holdBackQueue.get(keyOfAcks);
+                	            holdBackQueue.remove(keyOfAcks);
+                            }
+                	        else {
+                	            continue;
+                	        }
+                	    }
+                	    else {
+                	        continue;
+                	    }
                 	}
           
                     RuleAction action = RuleAction.NONE;

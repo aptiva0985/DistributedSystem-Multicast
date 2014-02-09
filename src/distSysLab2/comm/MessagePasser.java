@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -32,7 +33,7 @@ public class MessagePasser {
     
     private HashMap<String, TimeStampMessage> holdBackQueue = new HashMap<String, TimeStampMessage>();
     private HashMap<String, LinkedList<MulticastMessage>> sendMsgQueue =  new HashMap<String, LinkedList<MulticastMessage>>();
-    private HashMap<String, LinkedList<MulticastMessage>> acks = new HashMap<String, LinkedList<MulticastMessage>>();
+    private HashMap<String, HashSet<String>> acks = new HashMap<String, HashSet<String>>();
     private HashMap<String, Integer> sendCounter = new HashMap<String, Integer>();
 
     private String configFile;
@@ -154,8 +155,8 @@ public class MessagePasser {
             GroupBean sendGroup = groupList.get(message.getDest());
             MulticastMessage actual = null;
             // Send the message to every group member
-            LinkedList<MulticastMessage> temp = new LinkedList<MulticastMessage>();
-            acks.put(sendGroup.getName() + message.getSrc() + sendCounter.get(sendGroup.getName()), temp);
+//            HashSet<MulticastMessage> temp = new HashSet<MulticastMessage>();
+//            acks.put(sendGroup.getName() + message.getSrc() + sendCounter.get(sendGroup.getName()), temp);
             for(String member : sendGroup.getMemberList()) {
                 // Make a copy of the message and change the destination
                 actual = MulticastMessage.Multicast(message);
@@ -288,7 +289,7 @@ public class MessagePasser {
         return clockServ;
     }
     
-    public HashMap<String, LinkedList<MulticastMessage>> getAcks() {
+    public HashMap<String, HashSet<String>> getAcks() {
         return acks;
     }
 

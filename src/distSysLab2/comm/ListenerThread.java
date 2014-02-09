@@ -5,7 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import distSysLab2.clock.ClockService;
@@ -25,7 +25,7 @@ public class ListenerThread implements Runnable {
     private Thread thread;
     private ClockService clock;
     private HashMap<String, TimeStampMessage> holdBackQueue;
-    private HashMap<String, LinkedList<MulticastMessage>> acks;
+    private HashMap<String, HashSet<String>> acks;
     private HashMap<String, GroupBean> groupList;
 
     public ListenerThread(int port, String configFile,
@@ -33,7 +33,7 @@ public class ListenerThread implements Runnable {
                             LinkedBlockingDeque<TimeStampMessage> recvQueue,
                             LinkedBlockingDeque<TimeStampMessage> recvDelayQueue, ClockService clock,
                             HashMap<String, TimeStampMessage> holdBackQueue,
-                            HashMap<String, LinkedList<MulticastMessage>> acks,
+                            HashMap<String, HashSet<String>> acks,
                             HashMap<String, GroupBean> groupList) {
         this.port = port;
         this.clock = clock;
