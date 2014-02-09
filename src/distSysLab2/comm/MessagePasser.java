@@ -183,7 +183,7 @@ public class MessagePasser {
      * @param message The message need to be sent.
      * @param willLog If this message need to be logged.
      */
-    private void checkRuleAndSend(TimeStampMessage message) {
+    public void checkRuleAndSend(TimeStampMessage message) {
         // Check if the configuration file has been changed.
         String MD5 = ConfigParser.getMD5Checksum(configFile);
         if (!MD5.equals(MD5Last)) {

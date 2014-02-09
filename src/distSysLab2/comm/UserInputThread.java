@@ -27,7 +27,7 @@ public class UserInputThread implements Runnable {
                         dest = in.readLine();
                     }
 
-                    System.out.println("Message kind (any string):");
+                    System.out.println("Message kind (any string but not \"Ack\"):");
                     String kind = in.readLine();
                     System.out.println("Message data:");
                     String data = in.readLine();
