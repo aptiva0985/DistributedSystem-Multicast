@@ -178,7 +178,7 @@ public class MessagePasser {
      * @param message The message need to be sent.
      * @param willLog If this message need to be logged.
      */
-    public void checkRuleAndSend(TimeStampMessage message) {
+    private void checkRuleAndSend(TimeStampMessage message) {
         // Check if the configuration file has been changed.
         String MD5 = ConfigParser.getMD5Checksum(configFile);
         if (!MD5.equals(MD5Last)) {
@@ -199,18 +199,17 @@ public class MessagePasser {
         switch (action) {
         case DROP:
             // Just drop this message.
-            sendToLogger(message);
             break;
 
         case DUPLICATE:
             // Add this message into sendQueue.
             sendQueue.add(message);
-            sendToLogger(message);
             // Add a duplicate message into sendQueue.
             TimeStampMessage copy = (TimeStampMessage) message.copyOf();
             copy.setDuplicate(true);
             sendQueue.add(copy);
             sendToLogger(copy);
+            
             sendQueue.addAll(sendDelayQueue);
             sendDelayQueue.clear();
             break;
@@ -218,14 +217,12 @@ public class MessagePasser {
         case DELAY:
             // Add this message into delayQueue
             sendDelayQueue.add(message);
-            sendToLogger(message);
             break;
 
         case NONE:
         default:
             // Add this message into sendQueue
             sendQueue.add(message);
-            sendToLogger(message);
             sendQueue.addAll(sendDelayQueue);
             sendDelayQueue.clear();
         }
