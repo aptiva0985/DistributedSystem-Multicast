@@ -9,13 +9,13 @@ clockType:
     - Type: Vector
 configuration:
     - name: alice
-      ip: 192.168.1.131
+      ip: 128.237.209.200
       port: 11111
-    - name: bobb
-      ip: 192.168.1.131
+    - name: bob
+      ip: 128.237.209.200
       port: 22222
     - name: charlie
-      ip: 192.168.1.131
+      ip: 128.237.209.200
       port: 33333
     - name: daphnie
       ip: 192.168.1.131
