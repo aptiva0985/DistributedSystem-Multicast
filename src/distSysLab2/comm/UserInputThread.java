@@ -35,7 +35,11 @@ public class UserInputThread implements Runnable {
                     Boolean willLog = (new Boolean(in.readLine())).booleanValue();
 
                     TimeStampMessage msg = new TimeStampMessage(dest, kind, data);
-                    msgPasser.send(msg, willLog);
+                    msgPasser.send(msg);
+                    
+                    if(willLog == true) {
+                        msgPasser.sendToLogger(msg);
+                    }
 
                     System.out.println("Send Success:");
                     System.out.println(msg.toString());
@@ -44,13 +48,16 @@ public class UserInputThread implements Runnable {
                     System.out.println("Do you want it to be logged (true/false):");
                     Boolean willLog = (new Boolean(in.readLine())).booleanValue();
 
-                    TimeStampMessage msg = msgPasser.receive(willLog);
+                    TimeStampMessage msg = msgPasser.receive();
                     if(msg == null) {
                         System.out.println("Nothing received.");
                     }
                     else {
                         System.out.println("Received:");
                         System.out.println(msg.toString());
+                        if(willLog == true) {
+                            msgPasser.sendToLogger(msg);
+                        }
                     }
                 }
                 else if(command.equals("status")) {

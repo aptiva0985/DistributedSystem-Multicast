@@ -93,29 +93,6 @@ public class MessagePasser {
     }
 
     /**
-     * For message that need to be logged, send it to the logger.
-     * @param msg
-     * @param info
-     * @param willLog
-     */
-    private void sendToLogger(TimeStampMessage msg, String info, boolean willLog) {
-        if(willLog == true) {
-            if(nodeList.get(loggerName) == null) {
-                System.err.println("You have not assigned a valid logger.");
-                return;
-            }
-
-            // Build a wrapper message to make the original message as its data field.
-            TimeStampMessage wrapper = new TimeStampMessage(loggerName, info, msg);
-            wrapper.setSrc(localName);
-            wrapper.setSeqNum(curSeqNum++);
-            wrapper.setTimeStamp(msg.getTimeStamp());
-
-            sendQueue.add(wrapper);
-        }
-    }
-
-    /**
      * Initialization for receive thread.
      */
     public synchronized void startListener() {
@@ -161,7 +138,7 @@ public class MessagePasser {
      * @param message The message need to be sent.
      * @param willLog If this message need to be logged.
      */
-    public void send(TimeStampMessage message, boolean willLog) {
+    public void send(TimeStampMessage message) {
         // Set source and seq of the massage
         message.setSrc(localName);
         message.setSeqNum(curSeqNum++);
@@ -183,7 +160,7 @@ public class MessagePasser {
                 // Update the counter for current receive group
                 sendCounter.put(sendGroup.getName(), sendCounter.get(sendGroup.getName() + 1));
                 
-                checkRuleAndSend(actual, willLog);
+                checkRuleAndSend(actual);
             }
             
             // Setup timer for timeout
@@ -192,7 +169,7 @@ public class MessagePasser {
             thread.start();
         }
         else {
-            checkRuleAndSend(message, willLog);
+            checkRuleAndSend(message);
         }
     }
     
@@ -201,7 +178,7 @@ public class MessagePasser {
      * @param message The message need to be sent.
      * @param willLog If this message need to be logged.
      */
-    public void checkRuleAndSend(TimeStampMessage message, boolean willLog) {
+    public void checkRuleAndSend(TimeStampMessage message) {
         // Check if the configuration file has been changed.
         String MD5 = ConfigParser.getMD5Checksum(configFile);
         if (!MD5.equals(MD5Last)) {
@@ -222,18 +199,18 @@ public class MessagePasser {
         switch (action) {
         case DROP:
             // Just drop this message.
-            sendToLogger(message, "Sender dropped.", willLog);
+            sendToLogger(message);
             break;
 
         case DUPLICATE:
             // Add this message into sendQueue.
             sendQueue.add(message);
-            sendToLogger(message, "Sender accepted.", willLog);
+            sendToLogger(message);
             // Add a duplicate message into sendQueue.
             TimeStampMessage copy = (TimeStampMessage) message.copyOf();
             copy.setDuplicate(true);
             sendQueue.add(copy);
-            sendToLogger(copy, "Sender duplicated.", willLog);
+            sendToLogger(copy);
             sendQueue.addAll(sendDelayQueue);
             sendDelayQueue.clear();
             break;
@@ -241,17 +218,37 @@ public class MessagePasser {
         case DELAY:
             // Add this message into delayQueue
             sendDelayQueue.add(message);
-            sendToLogger(message, "Sender delayed.", willLog);
+            sendToLogger(message);
             break;
 
         case NONE:
         default:
             // Add this message into sendQueue
             sendQueue.add(message);
-            sendToLogger(message, "Sender accepted.", willLog);
+            sendToLogger(message);
             sendQueue.addAll(sendDelayQueue);
             sendDelayQueue.clear();
         }
+    }
+    
+
+    /**
+     * For message that need to be logged, send it to the logger.
+     * @param msg The message that will be logged
+     */
+    public void sendToLogger(TimeStampMessage msg) {
+        if(nodeList.get(loggerName) == null) {
+            System.err.println("You have not assigned a valid logger.");
+            return;
+        }
+
+        // Build a wrapper message to make the original message as its data field.
+        TimeStampMessage wrapper = new TimeStampMessage(loggerName, "LOG", msg);
+        wrapper.setSrc(localName);
+        wrapper.setSeqNum(curSeqNum++);
+        wrapper.setTimeStamp(msg.getTimeStamp());
+
+        sendQueue.add(wrapper);
     }
 
     /**
@@ -260,7 +257,7 @@ public class MessagePasser {
      *
      * @return A message
      */
-    public TimeStampMessage receive(Boolean willLog) {
+    public TimeStampMessage receive() {
         TimeStampMessage message = null;
         synchronized (recvQueue) {
             if (!recvQueue.isEmpty()) {
@@ -268,16 +265,9 @@ public class MessagePasser {
             }
         }
 
-        if(message != null) {
-            sendToLogger(message, "Receive accepted.", willLog);
-        }
-
         return message;
     }
 
-    /**
-     * Do the termination work.
-     */
     public void teminate() throws IOException {
         listener.teminate();
 

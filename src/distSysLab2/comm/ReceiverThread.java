@@ -88,7 +88,7 @@ public class ReceiverThread implements Runnable {
                 		    		ackMsg.setSeqNum(message.getSeqNum());
                 		    		ackMsg.setSrcGroup(((MulticastMessage) message).getSrcGroup());
                 		    		ackMsg.setNum(((MulticastMessage) message).getNum());
-                		    		MessagePasser.getInstance().send(ackMsg, false);
+                		    		MessagePasser.getInstance().send(ackMsg);
                 		    	}
                 		    }
                 			

@@ -35,7 +35,7 @@ public class AckChecker implements Runnable {
                     return;
                 }
                 else {
-                    MessagePasser.getInstance().send(message, false);
+                    MessagePasser.getInstance().send(message);
                 }
             }
         }
