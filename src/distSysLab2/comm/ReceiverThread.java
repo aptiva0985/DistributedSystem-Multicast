@@ -47,7 +47,7 @@ public class ReceiverThread implements Runnable {
         this.configFile = configFile;
         MD5Last = "";
         this.holdBackQueue = holdBackQueue;
-        this.acks = acks;
+        this.acks = MessagePasser.getInstance().getAcks();
         this.groupList = groupList;
     }
 
@@ -70,8 +70,9 @@ public class ReceiverThread implements Runnable {
                 	
                 	if(message instanceof MulticastMessage) {
                 		String keyOfAcks = null;
-                		System.out.println(message.getData());
                 		if(!message.getKind().equals("Ack")) {
+                		    MulticastMessage multiMsg = (MulticastMessage) message;
+                		    System.out.println("Get a multicast message, from " + multiMsg.getSrc() + " destGroup: " + multiMsg.getSrcGroup());
                 			keyOfAcks = ((MulticastMessage) message).getSrcGroup() + message.getSrc() + ((MulticastMessage) message).getNum();
                 			if(!holdBackQueue.containsKey(keyOfAcks)) {
                 				holdBackQueue.put(keyOfAcks, message);
@@ -81,7 +82,7 @@ public class ReceiverThread implements Runnable {
                 		    String groupName = ((MulticastMessage) message).getSrcGroup();
                 		    String localName = message.getDest();
                 		    ArrayList<String> memberList = groupList.get(groupName).getMemberList();
-                		    for(int i = 0; i < memberList.size(); i ++) {
+                		    for(int i = 0; i < memberList.size(); i++) {
                 		    	if(!memberList.get(i).equals(localName)) {
                 		    		MulticastMessage ackMsg = new MulticastMessage(memberList.get(i), "Ack", keyOfAcks);
                 		    		ackMsg.setSrc(localName);
@@ -89,17 +90,20 @@ public class ReceiverThread implements Runnable {
                 		    		ackMsg.setSeqNum(message.getSeqNum());
                 		    		ackMsg.setSrcGroup(((MulticastMessage) message).getSrcGroup());
                 		    		ackMsg.setNum(((MulticastMessage) message).getNum());
+                		    		System.out.println("Send Ack message from " + ackMsg.getSrc() + ", to: " + ackMsg.getDest());
                 		    		MessagePasser.getInstance().send(ackMsg);
                 		    	}
                 		    }
                 			
                 		}
                 		else {
+                		    MulticastMessage multiMsg = (MulticastMessage) message;
+                            System.out.println("Get Ack message, from " + multiMsg.getSrc() + " to: " + multiMsg.getDest());
+                		    
                 			keyOfAcks = (String) message.getData();
-                			System.out.println("33333 " + keyOfAcks);
                 			if(acks.containsKey(keyOfAcks)) {
                 				int i = 0;
-                				for(; i < acks.get(keyOfAcks).size(); i ++) {
+                				for(; i < acks.get(keyOfAcks).size(); i++) {
                 					if(acks.get(keyOfAcks).get(i).getSrc().equals(message.getSrc())) {
                 						break;
                 					}
@@ -111,7 +115,6 @@ public class ReceiverThread implements Runnable {
                 				LinkedList<MulticastMessage> temp = new LinkedList<MulticastMessage>();
                 				temp.add((MulticastMessage) message);
                 				acks.put(keyOfAcks, temp);
-                				System.out.println("1111111111 " + acks.get(keyOfAcks).size());
                 			}
                 		}
                 		
@@ -124,7 +127,7 @@ public class ReceiverThread implements Runnable {
             					continue;
             				
             				message = multimessage;
-            				acks.remove(keyOfAcks);
+            				//acks.remove(keyOfAcks);
             				holdBackQueue.put(keyOfAcks, null);
             			}
             			else {

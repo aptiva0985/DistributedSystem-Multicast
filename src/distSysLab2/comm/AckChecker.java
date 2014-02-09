@@ -8,13 +8,13 @@ import distSysLab2.message.MulticastMessage;
 
 public class AckChecker implements Runnable {
     
-    private volatile HashMap<String, LinkedList<MulticastMessage>> acks;
     private MulticastMessage message;
     private ArrayList<String> memberList;
+    private volatile HashMap<String, LinkedList<MulticastMessage>> acks;
 
     public AckChecker(HashMap<String, LinkedList<MulticastMessage>> acks,
                       MulticastMessage message, ArrayList<String> memberList) {
-        this.acks = acks;
+        this.acks = MessagePasser.getInstance().getAcks();
         this.message = message;
         this.memberList = memberList;
     }
@@ -25,18 +25,19 @@ public class AckChecker implements Runnable {
             Thread.sleep(1000);
             
             String key = message.getSrcGroup() + message.getSrc() + message.getNum();
-            System.out.println("444444 " + key);
-            System.out.println(acks.get(key).size());
-            if(acks.get(key).size() == memberList.size() - 1) {
+            if(acks.get(key).size() == memberList.size()) {
+                System.out.println("Got enough Ack for message: " + key);
                 return;
             }
             else {
                 Thread.sleep(4000);
                 
-                if(acks.get(key).size() == memberList.size() - 1) {
+                if(acks.get(key).size() == memberList.size()) {
+                    System.out.println("Got enough Ack for message: " + key);
                     return;
                 }
                 else {
+                    System.out.println("Timeout for message: " + key + "Resend.");
                     MessagePasser.getInstance().send(message);
                 }
             }

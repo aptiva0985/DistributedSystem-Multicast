@@ -161,26 +161,13 @@ public class MessagePasser {
                 actual = MulticastMessage.Multicast(message);
                 actual.setDest(member);
                 actual.setSrcGroup(sendGroup.getName());
-                //System.out.println(sendCounter.get(sendGroup.getName()));
                 actual.setNum(sendCounter.get(sendGroup.getName()));
-<<<<<<< HEAD
-                checkRuleAndSend(actual, willLog);
-=======
-                
-                // Update the counter for current receive group
-                sendCounter.put(sendGroup.getName(), sendCounter.get(sendGroup.getName() + 1));
-                
+                System.out.println("Send a multicast message to:" + member);
                 checkRuleAndSend(actual);
->>>>>>> d511b90c4954a331fbe4f2dc42f16afaf63eea31
             }
             // Update the counter for current receive group
             sendCounter.put(sendGroup.getName(), sendCounter.get(sendGroup.getName()) + 1);
-            try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+
             // Setup timer for timeout
             AckChecker checker = new AckChecker(acks, actual, sendGroup.getMemberList());
             Thread thread = new Thread(checker);
@@ -299,6 +286,10 @@ public class MessagePasser {
 
     public ClockService getClockServ() {
         return clockServ;
+    }
+    
+    public HashMap<String, LinkedList<MulticastMessage>> getAcks() {
+        return acks;
     }
 
     @Override
