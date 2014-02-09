@@ -25,14 +25,14 @@ public class AckChecker implements Runnable {
             Thread.sleep(1000);
             
             String key = message.getSrcGroup() + message.getSrc() + message.getNum();
-            if(acks.get(key).size() == memberList.size()) {
+            if(acks.get(key).size() == (memberList.size() - 1)) {
                 System.out.println("Got enough Ack for message: " + key);
                 return;
             }
             else {
                 Thread.sleep(4000);
                 
-                if(acks.get(key).size() == memberList.size()) {
+                if(acks.get(key).size() == memberList.size() - 1) {
                     System.out.println("Got enough Ack for message: " + key);
                     return;
                 }
