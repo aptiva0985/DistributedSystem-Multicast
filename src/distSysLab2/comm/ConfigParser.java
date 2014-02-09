@@ -90,6 +90,7 @@ public class ConfigParser {
                 if(entry.getKey().equalsIgnoreCase("Members")) {
                     for(String member : (ArrayList<String>) entry.getValue()) {
                         bean.addMember(member);
+                        System.out.println(member);
                     }
                 }
             }

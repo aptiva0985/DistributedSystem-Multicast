@@ -12,12 +12,13 @@ public class MulticastMessage extends TimeStampMessage {
         super(dest, kind, data);
     }
     
-    public MulticastMessage(TimeStampMessage msg) {
+    public static MulticastMessage Multicast(TimeStampMessage msg) {
         MulticastMessage newMsg = new MulticastMessage(msg.getDest(), msg.getKind(), msg.getData());
         newMsg.setDuplicate(msg.getDuplicate());
         newMsg.setSeqNum(msg.getSeqNum());
         newMsg.setSrc(msg.getSrc());
         newMsg.setTimeStamp(msg.getTimeStamp());
+        return newMsg;
     }
 
 

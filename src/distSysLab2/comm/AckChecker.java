@@ -8,7 +8,7 @@ import distSysLab2.message.MulticastMessage;
 
 public class AckChecker implements Runnable {
     
-    private HashMap<String, LinkedList<MulticastMessage>> acks;
+    private volatile HashMap<String, LinkedList<MulticastMessage>> acks;
     private MulticastMessage message;
     private ArrayList<String> memberList;
 
@@ -25,6 +25,8 @@ public class AckChecker implements Runnable {
             Thread.sleep(1000);
             
             String key = message.getSrcGroup() + message.getSrc() + message.getNum();
+            System.out.println("444444 " + key);
+            System.out.println(acks.get(key).size());
             if(acks.get(key).size() == memberList.size() - 1) {
                 return;
             }

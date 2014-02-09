@@ -65,6 +65,10 @@ public class MessagePasser {
         sendRules = ConfigParser.readSendRules();
         recvRules = ConfigParser.readRecvRules();
         MD5Last = ConfigParser.getMD5Checksum(configFile);
+        
+        for(String temp : groupList.keySet()) {
+        	sendCounter.put(temp, 0);
+        }
 
         if(type.equalsIgnoreCase("VECTOR")) {
             clockType = ClockType.VECTOR;
@@ -171,23 +175,29 @@ public class MessagePasser {
         // If the message is a multicast one
         if(groupList.get(message.getDest()) != null) {
             GroupBean sendGroup = groupList.get(message.getDest());
-            
+            MulticastMessage actual = null;
             // Send the message to every group member
+            LinkedList<MulticastMessage> temp = new LinkedList<MulticastMessage>();
+            acks.put(sendGroup.getName() + message.getSrc() + sendCounter.get(sendGroup.getName()), temp);
             for(String member : sendGroup.getMemberList()) {
                 // Make a copy of the message and change the destination
-                MulticastMessage actual = new MulticastMessage(message);
+                actual = MulticastMessage.Multicast(message);
                 actual.setDest(member);
                 actual.setSrcGroup(sendGroup.getName());
+                //System.out.println(sendCounter.get(sendGroup.getName()));
                 actual.setNum(sendCounter.get(sendGroup.getName()));
-                
-                // Update the counter for current receive group
-                sendCounter.put(sendGroup.getName(), sendCounter.get(sendGroup.getName() + 1));
-                
                 checkRuleAndSend(actual, willLog);
             }
-            
+            // Update the counter for current receive group
+            sendCounter.put(sendGroup.getName(), sendCounter.get(sendGroup.getName()) + 1);
+            try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
             // Setup timer for timeout
-            AckChecker checker = new AckChecker(acks, (MulticastMessage) message, sendGroup.getMemberList());
+            AckChecker checker = new AckChecker(acks, actual, sendGroup.getMemberList());
             Thread thread = new Thread(checker);
             thread.start();
         }

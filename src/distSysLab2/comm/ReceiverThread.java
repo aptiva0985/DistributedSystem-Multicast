@@ -27,7 +27,7 @@ public class ReceiverThread implements Runnable {
     private String configFile;
     private String MD5Last;
     private HashMap<String, TimeStampMessage> holdBackQueue;
-    private HashMap<String, LinkedList<MulticastMessage>> acks;
+    private volatile HashMap<String, LinkedList<MulticastMessage>> acks;
     private HashMap<String, GroupBean> groupList;
 
     public ReceiverThread(Socket socket, String configFile, ClockService clock,
@@ -70,6 +70,7 @@ public class ReceiverThread implements Runnable {
                 	
                 	if(message instanceof MulticastMessage) {
                 		String keyOfAcks = null;
+                		System.out.println(message.getData());
                 		if(!message.getKind().equals("Ack")) {
                 			keyOfAcks = ((MulticastMessage) message).getSrcGroup() + message.getSrc() + ((MulticastMessage) message).getNum();
                 			if(!holdBackQueue.containsKey(keyOfAcks)) {
@@ -95,6 +96,7 @@ public class ReceiverThread implements Runnable {
                 		}
                 		else {
                 			keyOfAcks = (String) message.getData();
+                			System.out.println("33333 " + keyOfAcks);
                 			if(acks.containsKey(keyOfAcks)) {
                 				int i = 0;
                 				for(; i < acks.get(keyOfAcks).size(); i ++) {
@@ -109,9 +111,11 @@ public class ReceiverThread implements Runnable {
                 				LinkedList<MulticastMessage> temp = new LinkedList<MulticastMessage>();
                 				temp.add((MulticastMessage) message);
                 				acks.put(keyOfAcks, temp);
+                				System.out.println("1111111111 " + acks.get(keyOfAcks).size());
                 			}
                 		}
-                		if(groupList.get(((MulticastMessage) message).getSrcGroup()).getMemberList().size() == (acks.get(keyOfAcks).size() + 2)) {
+                		
+                		if((acks.get(keyOfAcks) != null) && (groupList.get(((MulticastMessage) message).getSrcGroup()).getMemberList().size() == (acks.get(keyOfAcks).size() + 1))) {
             				MulticastMessage multimessage = null;
             				if((holdBackQueue.containsKey(keyOfAcks))) {
             					multimessage = (MulticastMessage) holdBackQueue.get(keyOfAcks);
