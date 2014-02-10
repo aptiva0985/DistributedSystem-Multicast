@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import distSysLab2.clock.ClockService;
+import distSysLab2.message.MessageKey;
 import distSysLab2.message.MulticastMessage;
 import distSysLab2.message.TimeStampMessage;
 import distSysLab2.model.GroupBean;
@@ -24,17 +25,19 @@ public class ListenerThread implements Runnable {
     private ServerSocket listenSocket;
     private Thread thread;
     private ClockService clock;
-    private HashMap<String, TimeStampMessage> holdBackQueue;
-    private HashMap<String, HashSet<String>> acks;
+    private HashMap<MessageKey, MulticastMessage> holdBackQueue;
+    private HashMap<MessageKey, HashSet<String>> acks;
     private HashMap<String, GroupBean> groupList;
+    private HashMap<String, Integer> orderCounter;
 
     public ListenerThread(int port, String configFile,
                             ArrayList<RuleBean> recvRules, ArrayList<RuleBean> sendRules,
                             LinkedBlockingDeque<TimeStampMessage> recvQueue,
                             LinkedBlockingDeque<TimeStampMessage> recvDelayQueue, ClockService clock,
-                            HashMap<String, TimeStampMessage> holdBackQueue,
-                            HashMap<String, HashSet<String>> acks,
-                            HashMap<String, GroupBean> groupList) {
+                            HashMap<MessageKey, MulticastMessage> holdBackQueue,
+                            HashMap<MessageKey, HashSet<String>> acks,
+                            HashMap<String, GroupBean> groupList,
+                            HashMap<String, Integer> orderCounter) {
         this.port = port;
         this.clock = clock;
         this.recvQueue = recvQueue;
@@ -45,6 +48,7 @@ public class ListenerThread implements Runnable {
         this.holdBackQueue = holdBackQueue;
         this.acks = acks;
         this.groupList = groupList;
+        this.orderCounter = orderCounter;
     }
 
     @Override
@@ -57,7 +61,9 @@ public class ListenerThread implements Runnable {
 
                 // Create a new thread for new incoming connection.
                 thread = new Thread(new ReceiverThread(socket, configFile, clock,
-                                                       recvRules, sendRules, recvQueue, recvDelayQueue, holdBackQueue, acks, groupList));
+                                                       recvRules, sendRules, recvQueue,
+                                                       recvDelayQueue, holdBackQueue,
+                                                       acks, groupList, orderCounter));
                 thread.start();
             }
         }

@@ -11,6 +11,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import distSysLab2.clock.ClockService;
 import distSysLab2.clock.ClockService.ClockType;
+import distSysLab2.message.MessageKey;
 import distSysLab2.message.MulticastMessage;
 import distSysLab2.message.TimeStampMessage;
 import distSysLab2.model.GroupBean;
@@ -31,10 +32,11 @@ public class MessagePasser {
     private ArrayList<RuleBean> sendRules = new ArrayList<RuleBean>();
     private ArrayList<RuleBean> recvRules = new ArrayList<RuleBean>();
     
-    private HashMap<String, TimeStampMessage> holdBackQueue = new HashMap<String, TimeStampMessage>();
+    private HashMap<MessageKey, MulticastMessage> holdBackQueue = new HashMap<MessageKey, MulticastMessage>();
     private HashMap<String, LinkedList<MulticastMessage>> sendMsgQueue =  new HashMap<String, LinkedList<MulticastMessage>>();
-    private HashMap<String, HashSet<String>> acks = new HashMap<String, HashSet<String>>();
+    private HashMap<MessageKey, HashSet<String>> acks = new HashMap<MessageKey, HashSet<String>>();
     private HashMap<String, Integer> sendCounter = new HashMap<String, Integer>();
+    private HashMap<String, Integer> orderCounter = new HashMap<String, Integer>();
 
     private String configFile;
     private String localName;
@@ -68,7 +70,7 @@ public class MessagePasser {
         MD5Last = ConfigParser.getMD5Checksum(configFile);
         
         for(String temp : groupList.keySet()) {
-        	sendCounter.put(temp, 0);
+        	sendCounter.put(temp, 1);
         }
 
         if(type.equalsIgnoreCase("VECTOR")) {
@@ -90,7 +92,8 @@ public class MessagePasser {
         }
         else {
             listener = new ListenerThread(nodeList.get(localName).getPort(), configFile,
-                                            recvRules, sendRules, recvQueue, recvDelayQueue,clockServ, holdBackQueue, acks, groupList);
+                                          recvRules, sendRules, recvQueue, recvDelayQueue,
+                                          clockServ, holdBackQueue, acks, groupList, orderCounter);
             sender = new SenderThread(sendQueue, nodeList);
         }
 
@@ -154,9 +157,8 @@ public class MessagePasser {
         if(groupList.get(message.getDest()) != null) {
             GroupBean sendGroup = groupList.get(message.getDest());
             MulticastMessage actual = null;
+            
             // Send the message to every group member
-//            HashSet<MulticastMessage> temp = new HashSet<MulticastMessage>();
-//            acks.put(sendGroup.getName() + message.getSrc() + sendCounter.get(sendGroup.getName()), temp);
             for(String member : sendGroup.getMemberList()) {
                 // Make a copy of the message and change the destination
                 actual = MulticastMessage.Multicast(message);
@@ -289,7 +291,7 @@ public class MessagePasser {
         return clockServ;
     }
     
-    public HashMap<String, HashSet<String>> getAcks() {
+    public HashMap<MessageKey, HashSet<String>> getAcks() {
         return acks;
     }
 

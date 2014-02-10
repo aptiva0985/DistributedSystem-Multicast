@@ -4,15 +4,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import distSysLab2.message.MessageKey;
 import distSysLab2.message.MulticastMessage;
 
 public class AckChecker implements Runnable {
     
     private MulticastMessage message;
     private ArrayList<String> memberList;
-    private volatile HashMap<String, HashSet<String>> acks;
+    private volatile HashMap<MessageKey, HashSet<String>> acks;
 
-    public AckChecker(HashMap<String, HashSet<String>> acks,
+    public AckChecker(HashMap<MessageKey, HashSet<String>> acks,
                       MulticastMessage message, ArrayList<String> memberList) {
         this.acks = MessagePasser.getInstance().getAcks();
         this.message = message;
@@ -24,7 +25,11 @@ public class AckChecker implements Runnable {
         try {
             Thread.sleep(2000);
             
-            String key = message.getSrcGroup() + message.getSrc() + message.getNum();
+            MessageKey key = new MessageKey();
+            key.setDestGroup(message.getSrcGroup());
+            key.setSrc(message.getSrc());
+            key.setNum(message.getNum());
+            
             if(acks.get(key).size() == memberList.size() - 1) {
                 System.out.println("Got enough Ack for message: " + key);
                 return;
