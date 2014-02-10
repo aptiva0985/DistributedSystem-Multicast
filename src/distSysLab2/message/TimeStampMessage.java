@@ -8,9 +8,9 @@ public class TimeStampMessage extends Message implements Comparable<TimeStampMes
     private static final long serialVersionUID = 1L;
 
     private TimeStamp timeStamp;
-    
+
     public TimeStampMessage() {
-        
+
     }
 
     public TimeStampMessage(String dest, String kind, Object data) {

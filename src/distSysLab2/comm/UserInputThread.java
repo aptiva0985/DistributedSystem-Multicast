@@ -36,7 +36,7 @@ public class UserInputThread implements Runnable {
 
                     TimeStampMessage msg = new TimeStampMessage(dest, kind, data);
                     msgPasser.send(msg);
-                    
+
                     if(willLog == true) {
                         msgPasser.sendToLogger(msg);
                     }

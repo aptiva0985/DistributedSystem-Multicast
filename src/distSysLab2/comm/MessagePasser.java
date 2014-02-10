@@ -6,7 +6,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import distSysLab2.clock.ClockService;
@@ -26,14 +25,13 @@ public class MessagePasser {
     private LinkedBlockingDeque<TimeStampMessage> sendDelayQueue = new LinkedBlockingDeque<TimeStampMessage>();
     private LinkedBlockingDeque<TimeStampMessage> recvQueue = new LinkedBlockingDeque<TimeStampMessage>();
     private LinkedBlockingDeque<TimeStampMessage> recvDelayQueue = new LinkedBlockingDeque<TimeStampMessage>();
-    
+
     private HashMap<String, NodeBean> nodeList = new HashMap<String, NodeBean>();
     private HashMap<String, GroupBean> groupList = new HashMap<String, GroupBean>();
     private ArrayList<RuleBean> sendRules = new ArrayList<RuleBean>();
     private ArrayList<RuleBean> recvRules = new ArrayList<RuleBean>();
-    
+
     private HashMap<MessageKey, MulticastMessage> holdBackQueue = new HashMap<MessageKey, MulticastMessage>();
-    private HashMap<String, LinkedList<MulticastMessage>> sendMsgQueue =  new HashMap<String, LinkedList<MulticastMessage>>();
     private HashMap<MessageKey, HashSet<String>> acks = new HashMap<MessageKey, HashSet<String>>();
     private HashMap<String, Integer> sendCounter = new HashMap<String, Integer>();
     private HashMap<String, Integer> orderCounter = new HashMap<String, Integer>();
@@ -68,11 +66,13 @@ public class MessagePasser {
         sendRules = ConfigParser.readSendRules();
         recvRules = ConfigParser.readRecvRules();
         MD5Last = ConfigParser.getMD5Checksum(configFile);
-        
+
+        // Initialize the send record
         for(String temp : groupList.keySet()) {
         	sendCounter.put(temp, 1);
         }
 
+        // Retrieve the clock type
         if(type.equalsIgnoreCase("VECTOR")) {
             clockType = ClockType.VECTOR;
         }
@@ -152,12 +152,12 @@ public class MessagePasser {
         message.setSeqNum(curSeqNum++);
         this.getClockServ().updateTimeStampOnSend();
         message.setTimeStamp(clockServ.getCurTimeStamp());
-        
+
         // If the message is a multicast one
         if(groupList.get(message.getDest()) != null) {
             GroupBean sendGroup = groupList.get(message.getDest());
             MulticastMessage actual = null;
-            
+
             // Send the message to every group member
             for(String member : sendGroup.getMemberList()) {
                 // Make a copy of the message and change the destination
@@ -180,9 +180,9 @@ public class MessagePasser {
             checkRuleAndSend(message);
         }
     }
-    
+
     /**
-     * Check message with send rule, then try to send the message. 
+     * Check message with send rule, then try to send the message.
      * @param message The message need to be sent.
      * @param willLog If this message need to be logged.
      */
@@ -217,7 +217,7 @@ public class MessagePasser {
             copy.setDuplicate(true);
             sendQueue.add(copy);
             sendToLogger(copy);
-            
+
             sendQueue.addAll(sendDelayQueue);
             sendDelayQueue.clear();
             break;
@@ -235,7 +235,7 @@ public class MessagePasser {
             sendDelayQueue.clear();
         }
     }
-    
+
 
     /**
      * For message that need to be logged, send it to the logger.
@@ -282,7 +282,7 @@ public class MessagePasser {
     public HashMap<String, NodeBean> getNodeList() {
         return nodeList;
     }
-    
+
     public HashMap<String, GroupBean> getGroupList() {
         return groupList;
     }
@@ -290,7 +290,7 @@ public class MessagePasser {
     public ClockService getClockServ() {
         return clockServ;
     }
-    
+
     public HashMap<MessageKey, HashSet<String>> getAcks() {
         return acks;
     }

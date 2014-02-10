@@ -1,6 +1,7 @@
 package distSysLab2.comm;
 
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
@@ -60,6 +61,7 @@ public class ReceiverThread implements Runnable {
         try {
             while(true) {
                 TimeStampMessage message = null;
+                // Check whether the config file has benn changed
                 String MD5 = ConfigParser.getMD5Checksum(configFile);
                 if (!MD5.equals(MD5Last)) {
                     sendRules = ConfigParser.readSendRules();
@@ -69,9 +71,7 @@ public class ReceiverThread implements Runnable {
 
                 in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
                 if((message = (TimeStampMessage) (in.readObject())) != null) {
-                    // Try to match a rule and act corresponding
-                    // The match procedure should be in the listener thread
-                	
+                    // Message processing is different if it is a multicast one
                 	if(message instanceof MulticastMessage) {
                 	    processMulti((MulticastMessage) message);
                 	}
@@ -81,6 +81,9 @@ public class ReceiverThread implements Runnable {
                 }
             }
         }
+        catch (EOFException e) {
+
+        }
         catch (IOException e) {
             e.printStackTrace();
         }
@@ -88,27 +91,27 @@ public class ReceiverThread implements Runnable {
             e.printStackTrace();
         }
     }
-    
+
     private void processMulti(MulticastMessage multiMsg) {
         String destGroup = multiMsg.getSrcGroup();
         ArrayList<String> memberList = groupList.get(destGroup).getMemberList();
         MessageKey curKey = new MessageKey();
-        
+
         // If we receive a real multicast message
         if(!multiMsg.getKind().equals("Ack")) {
             String localName = multiMsg.getDest();
-            System.out.println("Get a multicast message, from " +
-                               multiMsg.getSrc() + " destGroup: " + destGroup + multiMsg);
-            
+            //System.out.println("Get a multicast message, from " +
+            //                   multiMsg.getSrc() + " destGroup: " + destGroup + multiMsg);
+
             curKey.setDestGroup(multiMsg.getSrcGroup());
             curKey.setSrc(multiMsg.getSrc());
             curKey.setNum(multiMsg.getNum());
-            
+
             // If it is a new message, add it to holdBackQueue
             if(!holdBackQueue.containsKey(curKey)) {
                 holdBackQueue.put(curKey, multiMsg);
             }
-            
+
             // Send Ack message to every group member, exclude itself
             for(String member : memberList) {
                 if(!member.equals(localName)) {
@@ -118,14 +121,15 @@ public class ReceiverThread implements Runnable {
                     ackMsg.setSeqNum(multiMsg.getSeqNum());
                     ackMsg.setSrcGroup(((MulticastMessage) multiMsg).getSrcGroup());
                     ackMsg.setNum(((MulticastMessage) multiMsg).getNum());
-                    System.out.println("Send Ack message from " + ackMsg.getSrc() + ", to: " + ackMsg.getDest());
+                    //System.out.println("Send Ack message from " + ackMsg.getSrc() + ", to: " + ackMsg.getDest());
                     MessagePasser.getInstance().checkRuleAndSend(ackMsg);
                 }
             }
         }
+     // If we receive an Ack message
         else {
-            System.out.println("Get Ack message, from " + multiMsg.getSrc() + " to: " + multiMsg.getDest() + multiMsg);
-            
+            //System.out.println("Get Ack message, from " + multiMsg.getSrc() + " to: " + multiMsg.getDest() + multiMsg);
+            // Update ack record map
             curKey = (MessageKey) multiMsg.getData();
             if(acks.containsKey(curKey)) {
                 acks.get(curKey).add(multiMsg.getSrc());
@@ -136,22 +140,28 @@ public class ReceiverThread implements Runnable {
                 acks.put(curKey, tmp);
             }
         }
-        
+
         // If we get enough ack for this message
         if((acks.get(curKey) != null) &&
            (acks.get(curKey).size() == memberList.size() - 1) &&
            (holdBackQueue.containsKey(curKey))) {
             //String msgKey = curKey.getSrc() + curKey.getDestGroup();
             deliver(curKey);
-        } 
+        }
     }
-    
+
+    /**
+     * Deliver all deliverable message for certain message key
+     * @param curKey
+     */
     private void deliver(MessageKey curKey) {
         String msgKey = curKey.getSrc() + curKey.getDestGroup();
+        // Create entry if it is not existed in counter map
         if(orderCounter.get(msgKey) == null) {
             orderCounter.put(msgKey, 0);
         }
-        
+
+        // Try to deliver message in sequence
         if(orderCounter.get(msgKey) + 1 == curKey.getNum()) {
             while(holdBackQueue.containsKey(curKey)) {
                 MulticastMessage multiMsg = holdBackQueue.get(curKey);
@@ -162,8 +172,13 @@ public class ReceiverThread implements Runnable {
             }
         }
     }
-    
+
+    /**
+     * Check recv rule and process message according to rule
+     * @param message
+     */
     private void checkRuleAndPut(TimeStampMessage message) {
+        // Try to match a recv rule
         RuleAction action = RuleAction.NONE;
         for (RuleBean rule : recvRules) {
             if (rule.isMatch(message)) {

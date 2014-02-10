@@ -70,7 +70,7 @@ public class ConfigParser {
         nodeList.remove(null);
         return nodeList;
     }
-    
+
     /**
      * Read group definition part in config file.
      */
@@ -245,7 +245,7 @@ public class ConfigParser {
 
     /**
      * Generate MD5 value of a input file.
-     * 
+     *
      * @param filename
      *            The input file.
      * @return The MD5 value of input file.
